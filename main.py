@@ -93,7 +93,7 @@ def draw_pieces(coord, key, rotation, undraw=False):
             for y in range(len(piece)):
                 if piece[y][x] == 1:
                     color = piece_colors[key]
-                    draw(coord[0]+x-center_x, coord[1]+y-center_y, color)
+                    grid[coord[1]+y-center_y][coord[0]+x-center_x] = color
     else:
         for x in range(4):
             for y in range(4):
