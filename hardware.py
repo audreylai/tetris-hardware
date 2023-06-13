@@ -1,6 +1,7 @@
 from machine import Pin
 import time
 from neopixel import Neopixel
+import random
 
 LEDS = 1024 # How many LEDs?
 PIN = 28
@@ -26,11 +27,18 @@ for y in range(len(grid)):
     for x in range(len(grid[y])):
         grid[y][x] = pattern(y,x)
 
+def get_pixel_val(x, y):
+    coord = pattern(y,x)
+    return pixels[coord]
 
 def draw(xin, yin, color):
     coord = pattern(yin,xin)
-
     pixels[coord] = color
+
+def draw_grid(grid):
+    for y in range(len(grid)):
+        for x in range(len(grid[0])):
+            draw(x+11, y+4, grid[y][x])
 
 def get_button_press(key):
     ref = {
@@ -58,7 +66,12 @@ def draw_rect(coord1, coord2, color, border=True):
     
     if border:
         draw_rect((x1+1, y1+1), (x2-1, y2-1), (0,0,0), False)
-    pixels.show()
     
     
 
+def random_shuffle(seq):
+    l = len(seq)
+    for i in range(l):
+        j = random.randrange(l)
+        seq[i], seq[j] = seq[j], seq[i]
+    return seq
