@@ -66,8 +66,6 @@ def draw_rect(coord1, coord2, color, border=True):
     
     if border:
         draw_rect((x1+1, y1+1), (x2-1, y2-1), (0,0,0), False)
-    
-    
 
 def random_shuffle(seq):
     l = len(seq)
