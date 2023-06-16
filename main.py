@@ -3,7 +3,6 @@ from machine import Pin
 import time
 import math
 import random
-from ulab import numpy
 
 
 cursor_coord = [0, 0]
@@ -182,7 +181,7 @@ def swap_hold_piece(new_piece):
 
 def manage_level():
     global level
-    numbers = {}
+    
     pass
 
 # check functions

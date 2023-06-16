@@ -7,10 +7,6 @@ LEDS = 1024 # How many LEDs?
 PIN = 28
 pixels = Neopixel(LEDS, 0, PIN, "GRB")
 
-
-buttons = [Pin(x, Pin.IN, Pin.PULL_DOWN) for x in [21, 20, 17, 18]]
-joystick = [Pin(x, Pin.IN, Pin.PULL_DOWN) for x in [12, 11, 10]]
-
 def pattern(r, c):
         if r <= 15:
             if c % 2 == 0: # humanly odd, computationall even
@@ -22,6 +18,13 @@ def pattern(r, c):
         #print(r, c, result, "hi")
         return result
 
+def draw(xin, yin, color):
+    coord = pattern(yin,xin)
+    pixels[coord] = color
+
+buttons = [Pin(x, Pin.IN, Pin.PULL_DOWN) for x in [21, 20, 17, 18]]
+joystick = [Pin(x, Pin.IN, Pin.PULL_DOWN) for x in [12, 11, 10]]
+
 grid = [[ 0 for x in range(32)] for y in range(32)]
 for y in range(len(grid)):
     for x in range(len(grid[y])):
@@ -30,10 +33,6 @@ for y in range(len(grid)):
 def get_pixel_val(x, y):
     coord = pattern(y,x)
     return pixels[coord]
-
-def draw(xin, yin, color):
-    coord = pattern(yin,xin)
-    pixels[coord] = color
 
 def draw_grid(grid):
     for y in range(len(grid)):
@@ -73,3 +72,6 @@ def random_shuffle(seq):
         j = random.randrange(l)
         seq[i], seq[j] = seq[j], seq[i]
     return seq
+
+def display_text(text, x, y, color):
+    bf.text(text, x, y, color=color)
