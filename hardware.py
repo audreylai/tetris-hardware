@@ -4,7 +4,7 @@ from neopixel import Neopixel
 import random
 
 LEDS = 1024 # How many LEDs?
-PIN = 28
+PIN = 21
 pixels = Neopixel(LEDS, 0, PIN, "GRB")
 
 def pattern(r, c):
@@ -72,6 +72,3 @@ def random_shuffle(seq):
         j = random.randrange(l)
         seq[i], seq[j] = seq[j], seq[i]
     return seq
-
-def display_text(text, x, y, color):
-    bf.text(text, x, y, color=color)
