@@ -147,6 +147,12 @@ def drop_piece(piece_key, rotation):
 	while not is_collide((cursor_coord[0], cursor_coord[1]+1), piece_key, rotation, floor_only=True):
 		cursor_coord[1] += 1
 
+def drop_ghost(piece_key, rotation, undraw=False):
+	global floor_pieces, cursor_coord
+	ghost_coord = cursor_coord
+	while not is_collide((ghost_coord[0], ghost_coord[1]+1), piece_key, rotation, floor_only=True):
+		ghost_coord[1] += 1
+	draw_piece(ghost_coord, piece_key, rotation, undraw=undraw)
 
 # managment
 def manage_next_pieces():
@@ -334,6 +340,7 @@ def game_loop():
 
 		check_clear_lines()
 		draw_piece(cursor_coord, piece_key, rotation, undraw=True)
+		drop_ghost(piece_key, rotation, undraw=True)
 		manage_level()
 		# joystick controls
 		if time.time() - joystick_timer > 0.09:
@@ -382,6 +389,7 @@ def game_loop():
 			already_hold = False
 		
 		draw_piece(cursor_coord, piece_key, rotation)
+		drop_ghost(piece_key, rotation)
 
 		if rotation > 3:
 			rotation = 0
