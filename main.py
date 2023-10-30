@@ -2,6 +2,8 @@ from hardware import *
 import time
 import math
 import random
+import pygame
+from PIL import Image
 
 cursor_coord = [0, 0]
 rotation = 0
@@ -15,7 +17,17 @@ score = 0
 
 border_color = (10, 10 ,10)
 
+pygame.mixer.init(44100, -16, 1, 512)
+
+tetris_death = pygame.mixer.Sound('./sounds/tetris_death.wav')
+tetris_drop = pygame.mixer.Sound('./sounds/tetris_drop.wav')
+tetris_level = pygame.mixer.Sound('./sounds/tetris_level.wav')
+tetris_oneline = pygame.mixer.Sound('./sounds/tetris_oneline.wav')
+tetris_tetris = pygame.mixer.Sound('./sounds/tetris_tetris.wav')
+
 def init_game():
+	game_menu()
+	draw_rect((0,0), (31, 31), (0,0,0), border=False)
 	global next_pieces, cursor_coord, rotation, floor_pieces, grid, hold_piece_key, level, score
 	# draw borders
 	draw_rect((1, 3), (8, 8), border_color) # hold box
@@ -94,7 +106,7 @@ def get_piece_coord(coord, piece):
 				piece_coords.append([x + coord[0] - center_x, y + coord[1] - center_y])
 	return piece_coords
 
-def draw_piece(coord, key, rotation, undraw=False, is_grid=True):
+def draw_piece(coord, key, rotation, undraw=False, is_grid=True, ghost=False):
 	global grid
 	piece_colors = {
 		"0": [x*0.1 for x in (103, 225, 230)],
@@ -110,14 +122,13 @@ def draw_piece(coord, key, rotation, undraw=False, is_grid=True):
 	
 	if not undraw:
 		for x, y in piece_coords:
-			color = piece_colors[key]
+			color = piece_colors[key] if not ghost else (1, 1, 1)
 			if not is_grid:
 				draw(x, y, color)
 			else:
 				grid[y][x] = color
 	else:
 		for x, y in piece_coords:
-			color = piece_colors[key]
 			if not is_grid:
 				draw(x, y, (0,0,0))
 			else:
@@ -143,16 +154,17 @@ def is_collide(new_cursor_coord, piece_key, rotation, floor_only=False):
 	return False
 
 def drop_piece(piece_key, rotation):
+	pygame.mixer.Sound.play(tetris_drop)
 	global floor_pieces, cursor_coord
 	while not is_collide((cursor_coord[0], cursor_coord[1]+1), piece_key, rotation, floor_only=True):
 		cursor_coord[1] += 1
 
 def drop_ghost(piece_key, rotation, undraw=False):
 	global floor_pieces, cursor_coord
-	ghost_coord = cursor_coord
+	ghost_coord = cursor_coord.copy()
 	while not is_collide((ghost_coord[0], ghost_coord[1]+1), piece_key, rotation, floor_only=True):
 		ghost_coord[1] += 1
-	draw_piece(ghost_coord, piece_key, rotation, undraw=undraw)
+	draw_piece(ghost_coord, piece_key, rotation, undraw=undraw, ghost=True)
 
 # managment
 def manage_next_pieces():
@@ -190,7 +202,11 @@ def manage_level():
 	global level, score
 
 	if score > level**2 * 1000:
+		pygame.mixer.Sound.play(tetris_level)
 		level += 1
+	
+	if level > 9:
+		return True
 
 	numbers = {
 		"0": [
@@ -308,8 +324,10 @@ def check_clear_lines():
 			grid.pop(y)
 			grid.insert(0, [(0,0,0) for abc in range(10)])
 	if n_clears == 4:
+		pygame.mixer.Sound.play(tetris_tetris)
 		score += 800 * level
 	elif n_clears > 0:
+		pygame.mixer.Sound.play(tetris_oneline)
 		score += n_clears*100 + (n_clears-1)*100
 
 def game_loop():
@@ -325,10 +343,9 @@ def game_loop():
 	check_timer = time.time()
 
 	piece_key = None
-	old_game_speed = game_speed
 	while True:
-		if get_button_press("start") or check_is_full():
-			# plau boing
+		if get_button_press("start") or check_is_full() or manage_level():
+			pygame.mixer.Sound.play(tetris_death)
 			init_game()
 			can_move = False
 		if not can_move:
@@ -339,9 +356,9 @@ def game_loop():
 			can_move = True
 
 		check_clear_lines()
-		draw_piece(cursor_coord, piece_key, rotation, undraw=True)
 		drop_ghost(piece_key, rotation, undraw=True)
-		manage_level()
+		draw_piece(cursor_coord, piece_key, rotation, undraw=True)
+
 		# joystick controls
 		if time.time() - joystick_timer > 0.09:
 			if joystick_moved("left") and not is_collide((cursor_coord[0]-1, cursor_coord[1]), piece_key, rotation):
@@ -357,12 +374,15 @@ def game_loop():
 				game_speed = 0.2
 		
 		if get_button_press("rotate") and (time.time() - rotation_timer > 0.2):
-			print("HELLOOOOO")
-			if not is_collide(cursor_coord, piece_key, rotation + 1):
-				print("okay")
-				rotation += 1
-			else:
-				pass
+			if is_collide(cursor_coord, piece_key, rotation + 1):
+				print(cursor_coord)
+				if cursor_coord[0] < 5:
+					cursor_coord = [cursor_coord[0]+1, cursor_coord[1]]
+				else:
+					cursor_coord = [cursor_coord[0]-1, cursor_coord[1]]
+					# pass
+			rotation += 1
+
 			rotation_timer = time.time()
 
 		if get_button_press("hold") and not already_hold:
@@ -388,8 +408,8 @@ def game_loop():
 			can_move = False
 			already_hold = False
 		
-		draw_piece(cursor_coord, piece_key, rotation)
 		drop_ghost(piece_key, rotation)
+		draw_piece(cursor_coord, piece_key, rotation)
 
 		if rotation > 3:
 			rotation = 0
@@ -397,7 +417,30 @@ def game_loop():
 		draw_grid(grid)
 		pixels.show()
 
+def game_menu():
+	draw_rect((0,0), (31, 31), (0,0,0), border=False)
+	pixels.show()
+
+	in_menu = True
+	while in_menu:
+		if get_button_press("rotate"):
+			in_menu = False
+		
+		img = Image.open("menu.png")
+		from numpy import array
+		arr = array(img)
+		
+		for y in range(0, 32):
+			for x in range(0, 32):
+				# print(arr[y][x])
+				draw(x, y, arr[y][x][:3]*0.05)
+		pixels.show()
+		
+
+
+
 if __name__ == "__main__":
+	# game_menu()
 	init_game()
 	pixels.show()
 	game_loop()
